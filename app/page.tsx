@@ -5,6 +5,7 @@ import { LogIn } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as  dotenv from "dotenv"
+import FileUpload from "@/components/ui/FileUpload";
 dotenv.config({ path: ".env" })
 
 export default async function Home() {
@@ -29,7 +30,7 @@ export default async function Home() {
           </p>
           <div className="w-full mt-4">
             {isAuth ? (
-              <h1>fileUpload</h1>
+              <h1>< FileUpload /></h1>
             ) : (
               <Link href="/sign-in">
                 <Button>
