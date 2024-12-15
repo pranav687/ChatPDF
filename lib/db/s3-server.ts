@@ -4,7 +4,6 @@ import path from 'path';
 
 export async function downloadFromS3(file_key: string) {
     try {
-        // Update AWS credentials
         AWS.config.update({
             accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESSS_KEY,
             secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_KEY,
@@ -22,17 +21,22 @@ export async function downloadFromS3(file_key: string) {
             Key: file_key,
         };
 
+        console.log("Fetching file from S3...");
         const obj = await s3.getObject(params).promise();
 
-        const tempDir = path.join(__dirname, 'temp');
-        const file_name = path.join(tempDir, `pdf-${Date.now()}.pdf`);
+        // Ensure the directory exists
+        const tempDir = path.join(process.cwd(), 'temp');
         if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true });
         }
+
+        const file_name = path.join(tempDir, `pdf-${Date.now()}.pdf`);
+
         fs.writeFileSync(file_name, obj.Body as Buffer);
+        console.log("File downloaded and saved at:", file_name); // Logs file path after saving
         return file_name;
     } catch (error) {
-        console.log("Error downloading from S3:", error);
-        throw new Error('Could not download the file from S3');
+        console.error("Error while downloading from S3:", error);
+        throw error;
     }
 }
