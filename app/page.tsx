@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { LogIn } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import * as  dotenv from "dotenv"
 import FileUpload from "@/components/ui/FileUpload";

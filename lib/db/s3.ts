@@ -32,7 +32,7 @@ export async function uploadToS3(file: File) {
         })
         return Promise.resolve({
             file_key,
-            file_name: file.name
+            file_name: file.name,
         })
     } catch (error) {
         console.error('Error uploading file to S3:', error);
