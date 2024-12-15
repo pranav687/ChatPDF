@@ -33,7 +33,7 @@ export async function downloadFromS3(file_key: string) {
         const file_name = path.join(tempDir, `pdf-${Date.now()}.pdf`);
 
         fs.writeFileSync(file_name, obj.Body as Buffer);
-        console.log("File downloaded and saved at:", file_name); // Logs file path after saving
+        console.log("File downloaded and saved at:", file_name);
         return file_name;
     } catch (error) {
         console.error("Error while downloading from S3:", error);
