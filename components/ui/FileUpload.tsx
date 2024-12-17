@@ -1,5 +1,5 @@
 'use client';
-import { uploadToS3 } from '@/lib/db/s3';
+import { uploadToS3 } from '../../lib/s3';
 import axios from 'axios';
 import { Inbox, Loader2 } from 'lucide-react';
 import React, { useState } from 'react';

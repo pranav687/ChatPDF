@@ -1,16 +1,16 @@
-import { PageNumber } from './../node_modules/aws-sdk/clients/quicksight.d';
-import { Pinecone } from "@pinecone-database/pinecone";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import { Document, RecursiveCharacterTextSplitter } from '@pinecone-database/doc-splitter'
 import fs from "fs";
 import { downloadFromS3 } from './s3-server';
+import { getembeddings } from './embeddings';
+import md5 from "md5";
+import { convertToAscii } from './utils';
 
 
-export const getPineconeClient = () => {
-    return new Pinecone({
-        apiKey: process.env.PINECONE_API_KEY!,
-    });
-};
+const pineconeclient = new Pinecone({
+    apiKey: 'pcsk_57V9Zc_Ud7cxENhrQYPw85km4mdkZiC6JrzbZTUriwddDwxxhmLgHsf7hpMhNuctPN7JNR'
+});
 
 type PDFPage = {
     pageContent: string,
@@ -34,15 +34,38 @@ export async function loadS3IntoPinecone(filekey: string) {
 
         const documents = await Promise.all(pages.map(prepareDocument))
 
+        const vectors = await Promise.all(documents.flat().map(embedDocument))
 
-        return pages;
+
+        const validVectors = vectors.filter((vector) => vector !== null) as PineconeRecord[]
+        const pineconeIndex = pineconeclient.Index('chatpdf')
+        console.log("inserting vectors into pinecone")
+        const namespace = pineconeIndex.namespace(convertToAscii(filekey));
+        await namespace.upsert(validVectors);
+
+        return documents[0];
     } catch (error) {
         console.error("Error in loadS3IntoPinecone:", error);
         throw new Error("Failed to load S3 file into Pinecone.");
     }
 }
-async function embeeDocument() {
 
+async function embedDocument(doc: Document) {
+    try {
+        const embeddings = await getembeddings(doc.pageContent)
+        const hash = md5(doc.pageContent)
+        return {
+            id: hash,
+            values: embeddings,
+            metadata: {
+                text: doc.metadata.text,
+                PageNumber: doc.metadata.PageNumber
+            }
+        } as PineconeRecord
+    } catch (error) {
+        console.log(error)
+        return null
+    }
 }
 
 export const truncateString = (str: string, bytes: number) => {
@@ -52,7 +75,7 @@ export const truncateString = (str: string, bytes: number) => {
 
 async function prepareDocument(page: PDFPage) {
     let { pageContent, metadata } = page
-    pageContent = pageContent.replace(/\n/g, "")
+    pageContent = pageContent.replace(/\n/g, ' ')
     const spiltter = new RecursiveCharacterTextSplitter()
     const docs = await spiltter.splitDocuments([
         new Document({
